@@ -67,40 +67,42 @@ pub fn build(b: *std.Build) void {
     const pa_zig_lib = b.addLibrary(.{
         .name = "portaudio",
         .root_module = pa_zig_module,
-        .linkage = .static,
+        .linkage = .dynamic,
     });
+
+    linkPaSystemLibs(pa_zig_lib, target, pa_config);
 
     b.installArtifact(pa_zig_lib);
 
-    const devs_run = addExample(b, "devs", pa_zig_lib, target, optimize, pa_config);
+    const devs_run = addExample(b, "devs", pa_zig_lib, target, optimize);
     const devs_run_step = b.step("run-devs", "Run the device lister example");
     devs_run_step.dependOn(&devs_run.step);
 
-    const sine_run = addExample(b, "sine", pa_zig_lib, target, optimize, pa_config);
+    const sine_run = addExample(b, "sine", pa_zig_lib, target, optimize);
     const sine_run_step = b.step("run-sine", "Run the sine wave example");
     sine_run_step.dependOn(&sine_run.step);
 
-    const record_run = addExample(b, "record", pa_zig_lib, target, optimize, pa_config);
+    const record_run = addExample(b, "record", pa_zig_lib, target, optimize);
     const record_run_step = b.step("run-record", "Run the recording example");
     record_run_step.dependOn(&record_run.step);
 
-    const fuzz_run = addExample(b, "fuzz", pa_zig_lib, target, optimize, pa_config);
+    const fuzz_run = addExample(b, "fuzz", pa_zig_lib, target, optimize);
     const fuzz_run_step = b.step("run-fuzz", "Run the fuzz example");
     fuzz_run_step.dependOn(&fuzz_run.step);
 
-    const pink_run = addExample(b, "pink", pa_zig_lib, target, optimize, pa_config);
+    const pink_run = addExample(b, "pink", pa_zig_lib, target, optimize);
     const pink_run_step = b.step("run-pink", "Run the pink noise example");
     pink_run_step.dependOn(&pink_run.step);
 
-    const read_write_wire_run = addExample(b, "read_write_wire", pa_zig_lib, target, optimize, pa_config);
+    const read_write_wire_run = addExample(b, "read_write_wire", pa_zig_lib, target, optimize);
     const read_write_wire_run_step = b.step("run-read-write-wire", "Run the blocking wire example");
     read_write_wire_run_step.dependOn(&read_write_wire_run.step);
 
-    const saw_run = addExample(b, "saw", pa_zig_lib, target, optimize, pa_config);
+    const saw_run = addExample(b, "saw", pa_zig_lib, target, optimize);
     const saw_run_step = b.step("run-saw", "Run the saw wave example");
     saw_run_step.dependOn(&saw_run.step);
 
-    const write_sine_run = addExample(b, "write_sine", pa_zig_lib, target, optimize, pa_config);
+    const write_sine_run = addExample(b, "write_sine", pa_zig_lib, target, optimize);
     const write_sine_run_step = b.step("run-write-sine", "Run the blocking write sine example");
     write_sine_run_step.dependOn(&write_sine_run.step);
 
@@ -279,7 +281,6 @@ fn addExample(
     lib: *std.Build.Step.Compile,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
-    pa_config: PaConfig,
 ) *std.Build.Step.Run {
     const exe = b.addExecutable(.{
         .name = name,
@@ -290,7 +291,6 @@ fn addExample(
     exe.root_module.addImport("portaudio", lib.root_module);
 
     exe.linkLibrary(lib);
-    linkPaSystemLibs(exe, target, pa_config);
 
     b.installArtifact(exe);
 

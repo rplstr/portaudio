@@ -3,7 +3,12 @@
     .version = "1.0.0",
     .fingerprint = 0x2a7a2a313cbfc067,
     .minimum_zig_version = "0.14.1",
-    .dependencies = .{},
+    .dependencies = .{
+        .portaudio = .{
+            .url = "git+https://github.com/PortAudio/portaudio#19d598752989ed091b8f55ae688c940a8c085d73",
+            .hash = "N-V-__8AAPa4bQADb3hF9rNS2mZXv_u4na6uV8gZ0Fwj6t0k",
+        },
+    },
     .paths = .{
         "build.zig",
         "build.zig.zon",

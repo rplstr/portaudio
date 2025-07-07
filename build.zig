@@ -22,25 +22,31 @@ pub fn build(b: *std.Build) void {
         .linux_host = linux_host,
     };
 
+    const pa = b.dependency("portaudio", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     const pa_module = b.createModule(.{
         .target = target,
         .optimize = optimize,
     });
-    pa_module.addIncludePath(b.path("portaudio/include"));
-    pa_module.addIncludePath(b.path("portaudio/src/common"));
-    configurePaSources(b, pa_module, target, pa_config);
+    pa_module.addIncludePath(pa.path("include"));
+    pa_module.addIncludePath(pa.path("src/common"));
+    configurePaSources(b, pa_module, target, pa_config, pa);
     pa_module.addCSourceFiles(.{
+        .root = pa.path(""),
         .files = &.{
-            "portaudio/src/common/pa_allocation.c",
-            "portaudio/src/common/pa_converters.c",
-            "portaudio/src/common/pa_cpuload.c",
-            "portaudio/src/common/pa_debugprint.c",
-            "portaudio/src/common/pa_dither.c",
-            "portaudio/src/common/pa_front.c",
-            "portaudio/src/common/pa_process.c",
-            "portaudio/src/common/pa_ringbuffer.c",
-            "portaudio/src/common/pa_stream.c",
-            "portaudio/src/common/pa_trace.c",
+            "src/common/pa_allocation.c",
+            "src/common/pa_converters.c",
+            "src/common/pa_cpuload.c",
+            "src/common/pa_debugprint.c",
+            "src/common/pa_dither.c",
+            "src/common/pa_front.c",
+            "src/common/pa_process.c",
+            "src/common/pa_ringbuffer.c",
+            "src/common/pa_stream.c",
+            "src/common/pa_trace.c",
         },
     });
 
@@ -56,7 +62,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     pa_zig_module.linkLibrary(pa_lib);
-    pa_zig_module.addIncludePath(b.path("portaudio/include"));
+    pa_zig_module.addIncludePath(pa.path("include"));
 
     const pa_zig_lib = b.addLibrary(.{
         .name = "portaudio",
@@ -130,60 +136,63 @@ const PaConfig = struct {
     linux_host: LinuxHost,
 };
 
-fn configurePaSources(b: *std.Build, module: *std.Build.Module, target: std.Build.ResolvedTarget, pa_config: PaConfig) void {
+fn configurePaSources(b: *std.Build, module: *std.Build.Module, target: std.Build.ResolvedTarget, pa_config: PaConfig, pa_c_dep: *std.Build.Dependency) void {
     switch (target.result.os.tag) {
-        .windows => configureWindowsSources(b, module, pa_config.win_host),
-        .linux => configureLinuxSources(b, module, pa_config.linux_host),
-        .macos => configureMacosSources(b, module),
+        .windows => configureWindowsSources(b, module, pa_config.win_host, pa_c_dep),
+        .linux => configureLinuxSources(b, module, pa_config.linux_host, pa_c_dep),
+        .macos => configureMacosSources(b, module, pa_c_dep),
         else => log.warn("unsupported OS: {s}", .{@tagName(target.result.os.tag)}),
     }
 }
 
-fn configureWindowsSources(b: *std.Build, module: *std.Build.Module, win_host: WinHost) void {
+fn configureWindowsSources(b: *std.Build, module: *std.Build.Module, win_host: WinHost, pa_c_dep: *std.Build.Dependency) void {
+    _ = b;
     module.link_libc = true;
-    module.addIncludePath(b.path("portaudio/src/os/win"));
+    module.addIncludePath(pa_c_dep.path("src/os/win"));
     module.addCSourceFiles(.{
+        .root = pa_c_dep.path(""),
         .files = &.{
-            "portaudio/src/os/win/pa_win_coinitialize.c",
-            "portaudio/src/os/win/pa_win_hostapis.c",
-            "portaudio/src/os/win/pa_win_util.c",
-            "portaudio/src/os/win/pa_win_waveformat.c",
-            "portaudio/src/os/win/pa_x86_plain_converters.c",
+            "src/os/win/pa_win_coinitialize.c",
+            "src/os/win/pa_win_hostapis.c",
+            "src/os/win/pa_win_util.c",
+            "src/os/win/pa_win_waveformat.c",
+            "src/os/win/pa_x86_plain_converters.c",
         },
     });
     switch (win_host) {
         .wasapi => {
             module.addCMacro("PA_USE_WASAPI", "1");
-            module.addIncludePath(b.path("portaudio/src/hostapi/wasapi"));
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/wasapi/pa_win_wasapi.c") });
+            module.addIncludePath(pa_c_dep.path("src/hostapi/wasapi"));
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/wasapi/pa_win_wasapi.c") });
         },
         .dsound => {
             module.addCMacro("PA_USE_DS", "1");
-            module.addIncludePath(b.path("portaudio/src/hostapi/dsound"));
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/dsound/pa_win_ds.c") });
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/dsound/pa_win_ds_dynlink.c") });
+            module.addIncludePath(pa_c_dep.path("src/hostapi/dsound"));
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/dsound/pa_win_ds.c") });
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/dsound/pa_win_ds_dynlink.c") });
         },
         .mme => {
             module.addCMacro("PA_USE_MME", "1");
-            module.addIncludePath(b.path("portaudio/src/hostapi/mme"));
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/mme/pa_win_mme.c") });
+            module.addIncludePath(pa_c_dep.path("src/hostapi/mme"));
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/mme/pa_win_mme.c") });
         },
         .wdmks => {
             module.addCMacro("PA_USE_WDMKS", "1");
-            module.addIncludePath(b.path("portaudio/src/hostapi/wdmks"));
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/wdmks/pa_win_wdmks.c") });
+            module.addIncludePath(pa_c_dep.path("src/hostapi/wdmks"));
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/wdmks/pa_win_wdmks.c") });
         },
     }
 }
 
-fn configureLinuxSources(b: *std.Build, module: *std.Build.Module, linux_host: LinuxHost) void {
+fn configureLinuxSources(b: *std.Build, module: *std.Build.Module, linux_host: LinuxHost, pa_c_dep: *std.Build.Dependency) void {
     module.link_libc = true;
-    module.addIncludePath(b.path("portaudio/src/os/unix"));
+    module.addIncludePath(pa_c_dep.path("src/os/unix"));
     module.addCSourceFiles(.{
+        .root = pa_c_dep.path(""),
         .files = &.{
-            "portaudio/src/os/unix/pa_unix_hostapis.c",
-            "portaudio/src/os/unix/pa_unix_util.c",
-            "portaudio/src/os/unix/pa_pthread_util.c",
+            "src/os/unix/pa_unix_hostapis.c",
+            "src/os/unix/pa_unix_util.c",
+            "src/os/unix/pa_pthread_util.c",
         },
     });
     switch (linux_host) {
@@ -191,36 +200,38 @@ fn configureLinuxSources(b: *std.Build, module: *std.Build.Module, linux_host: L
             module.addCMacro("PA_USE_ALSA", "1");
             const alsa_include_dir = std.mem.trim(u8, b.run(&.{ "pkg-config", "alsa", "--variable=includedir" }), " \n\r");
             module.addIncludePath(.{ .cwd_relative = alsa_include_dir });
-            module.addIncludePath(b.path("portaudio/src/hostapi/alsa"));
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/alsa/pa_linux_alsa.c") });
+            module.addIncludePath(pa_c_dep.path("src/hostapi/alsa"));
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/alsa/pa_linux_alsa.c") });
         },
         .jack => {
             module.addCMacro("PA_USE_JACK", "1");
             const jack_include_dir = std.mem.trim(u8, b.run(&.{ "pkg-config", "jack", "--variable=includedir" }), " \n\r");
             module.addIncludePath(.{ .cwd_relative = jack_include_dir });
-            module.addIncludePath(b.path("portaudio/src/hostapi/jack"));
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/jack/pa_jack.c") });
+            module.addIncludePath(pa_c_dep.path("src/hostapi/jack"));
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/jack/pa_jack.c") });
         },
         .oss => {
             module.addCMacro("PA_USE_OSS", "1");
-            module.addIncludePath(b.path("portaudio/src/hostapi/oss"));
-            module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/oss/pa_unix_oss.c") });
+            module.addIncludePath(pa_c_dep.path("src/hostapi/oss"));
+            module.addCSourceFile(.{ .file = pa_c_dep.path("src/hostapi/oss/pa_unix_oss.c") });
         },
     }
 }
 
-fn configureMacosSources(b: *std.Build, module: *std.Build.Module) void {
-    module.addIncludePath(b.path("portaudio/src/os/unix"));
+fn configureMacosSources(b: *std.Build, module: *std.Build.Module, pa_c_dep: *std.Build.Dependency) void {
+    _ = b;
+    module.addIncludePath(pa_c_dep.path("src/os/unix"));
     module.addCMacro("PA_USE_COREAUDIO", "1");
     module.addCMacro("PA_USE_SYSTEM_CONVERTERS", "1");
-    module.addIncludePath(b.path("portaudio/src/hostapi/coreaudio"));
+    module.addIncludePath(pa_c_dep.path("src/hostapi/coreaudio"));
     module.addCSourceFiles(.{
+        .root = pa_c_dep.path(""),
         .files = &.{
-            "portaudio/src/os/unix/pa_unix_hostapis.c",
-            "portaudio/src/os/unix/pa_unix_util.c",
-            "portaudio/src/hostapi/coreaudio/pa_mac_core.c",
-            "portaudio/src/hostapi/coreaudio/pa_mac_core_blocking.c",
-            "portaudio/src/hostapi/coreaudio/pa_mac_core_utilities.c",
+            "src/os/unix/pa_unix_hostapis.c",
+            "src/os/unix/pa_unix_util.c",
+            "src/hostapi/coreaudio/pa_mac_core.c",
+            "src/hostapi/coreaudio/pa_mac_core_blocking.c",
+            "src/hostapi/coreaudio/pa_mac_core_utilities.c",
         },
     });
 }

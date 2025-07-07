@@ -177,7 +177,6 @@ fn configureWindowsSources(b: *std.Build, module: *std.Build.Module, win_host: W
 
 fn configureLinuxSources(b: *std.Build, module: *std.Build.Module, linux_host: LinuxHost) void {
     module.link_libc = true;
-    module.linkSystemLibrary("m", .{});
     module.addIncludePath(b.path("portaudio/src/os/unix"));
     module.addCSourceFiles(.{
         .files = &.{
@@ -189,11 +188,15 @@ fn configureLinuxSources(b: *std.Build, module: *std.Build.Module, linux_host: L
     switch (linux_host) {
         .alsa => {
             module.addCMacro("PA_USE_ALSA", "1");
+            const alsa_include_dir = std.mem.trim(u8, b.run(&.{ "pkg-config", "alsa", "--variable=includedir" }), " \n\r");
+            module.addIncludePath(.{ .cwd_relative = alsa_include_dir });
             module.addIncludePath(b.path("portaudio/src/hostapi/alsa"));
             module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/alsa/pa_linux_alsa.c") });
         },
         .jack => {
             module.addCMacro("PA_USE_JACK", "1");
+            const jack_include_dir = std.mem.trim(u8, b.run(&.{ "pkg-config", "jack", "--variable=includedir" }), " \n\r");
+            module.addIncludePath(.{ .cwd_relative = jack_include_dir });
             module.addIncludePath(b.path("portaudio/src/hostapi/jack"));
             module.addCSourceFile(.{ .file = b.path("portaudio/src/hostapi/jack/pa_jack.c") });
         },

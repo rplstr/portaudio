@@ -50,20 +50,21 @@ pub fn build(b: *std.Build) void {
         .linkage = .static,
     });
 
-    const pa_zig_module = b.createModule(.{
+    const pa_zig_module = b.addModule("portaudio", .{
         .root_source_file = b.path("portaudio.zig"),
         .target = target,
         .optimize = optimize,
     });
-
     pa_zig_module.linkLibrary(pa_lib);
     pa_zig_module.addIncludePath(b.path("portaudio/include"));
 
     const pa_zig_lib = b.addLibrary(.{
-        .name = "zig-portaudio",
+        .name = "portaudio",
         .root_module = pa_zig_module,
         .linkage = .static,
     });
+
+    b.installArtifact(pa_zig_lib);
 
     const devs_run = addExample(b, "devs", pa_zig_lib, target, optimize, pa_config);
     const devs_run_step = b.step("run-devs", "Run the device lister example");

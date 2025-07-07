@@ -37,7 +37,7 @@ zig fetch --save git+https://github.com/rplstr/portaudio.git
         .target = target,
         .optimize = optimize,
     });
-    exe.root_library.addImport("portaudio", portaudio.module("portaudio"));
+    exe.root_module.addImport("portaudio", portaudio.module("portaudio"));
     exe.linkLibrary(portaudio.artifact("portaudio"));
     ```
 

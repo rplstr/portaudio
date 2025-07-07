@@ -1,0 +1,14 @@
+.{
+    .name = .portaudio,
+    .version = "1.0.0",
+    .fingerprint = 0x2a7a2a313cbfc067,
+    .minimum_zig_version = "0.14.1",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "portaudio.zig",
+        "portaudio",
+        "examples",
+    },
+}

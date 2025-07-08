@@ -7,13 +7,13 @@ pub fn build(b: *std.Build) void {
 
     const win_host = b.option(
         WinHost,
-        "win-host",
+        "win_host",
         "Windows PortAudio Host API (wasapi, dsound, mme, wdmks)",
     ) orelse .wasapi;
 
     const linux_host = b.option(
         LinuxHost,
-        "linux-host",
+        "linux_host",
         "Linux PortAudio Host API (alsa, jack, oss)",
     ) orelse .alsa;
 

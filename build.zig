@@ -248,7 +248,11 @@ fn linkPaSystemLibs(exe: *std.Build.Step.Compile, target: std.Build.ResolvedTarg
                 exe.root_module.linkSystemLibrary("audioclient", .{});
                 exe.root_module.linkSystemLibrary("avrt", .{});
             },
-            .dsound => exe.root_module.linkSystemLibrary("ole32", .{}),
+            .dsound => {
+                exe.root_module.linkSystemLibrary("ole32", .{});
+                exe.root_module.linkSystemLibrary("dsound", .{});
+                exe.root_module.linkSystemLibrary("winmm", .{});
+            },
             .mme => exe.root_module.linkSystemLibrary("winmm", .{}),
             .wdmks => exe.root_module.linkSystemLibrary("setupapi", .{}),
         }

@@ -159,6 +159,7 @@ fn configureWindowsSources(b: *std.Build, module: *std.Build.Module, win_host: W
             "src/os/win/pa_win_util.c",
             "src/os/win/pa_win_waveformat.c",
             "src/os/win/pa_x86_plain_converters.c",
+            "src/os/win/pas_win_version.c",
         },
     });
     switch (win_host) {
